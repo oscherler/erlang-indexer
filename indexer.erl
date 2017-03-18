@@ -37,15 +37,25 @@ tokenize_test() ->
     [ "foo", "bar" ] = tokenize( " foo   bar  ", $  ).
 
 tokenize( String, Separator ) ->
-    tokenize( [], String, Separator, [] ).
+    lists:reverse( tokenize( [], String, Separator, [] ) ).
 
-tokenize( [], [], _Separator, Tokens ) ->
-    Tokens;
+% reached the end of the string, append current token if not empty
 tokenize( Current, [], _Separator, Tokens ) ->
-    Tokens ++ [ Current ];
-tokenize( [], [ Separator | Cs ], Separator, Tokens ) ->
-    tokenize( [], Cs, Separator, Tokens );
+    prepend_non_empty_token( Tokens, lists:reverse( Current ) );
+% reached separator, start a new token and append current if not empty
 tokenize( Current, [ Separator | Cs ], Separator, Tokens ) ->
-    tokenize( [], Cs, Separator, Tokens ++ [ Current ] );
+    tokenize( [], Cs, Separator, prepend_non_empty_token( Tokens, lists:reverse( Current ) ) );
+% inside a token, append character to current token
 tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
-    tokenize( Current ++ [ C ], Cs, Separator, Tokens ).
+    tokenize( [ C | Current ], Cs, Separator, Tokens ).
+
+prepend_non_empty_token_test() ->
+    [] = prepend_non_empty_token( [], [] ),
+    [ "foo" ] = prepend_non_empty_token( [ "foo" ], [] ),
+    [ "bar" ] = prepend_non_empty_token( [], "bar" ),
+    [ "foo", "bar", "baz" ] = prepend_non_empty_token( [ "bar", "baz" ], "foo" ).
+
+prepend_non_empty_token( Tokens, [] ) ->
+    Tokens;
+prepend_non_empty_token( Tokens, Current ) ->
+    [ Current | Tokens ].
