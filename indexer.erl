@@ -9,15 +9,13 @@ extract_words_test() ->
     [ "the", "quick", "brown", "fox" ] = extract_words("the “quick” brown fox!").
 
 extract_words( Line ) ->
-    Normalised = lists:map(
-        fun( C ) ->
-            case is_letter( C ) of
-                true -> C;
-                false -> 0
-            end
-        end,
-        Line
-    ),
+    Normalise = fun( C ) ->
+        case is_letter( C ) of
+            true  -> C;
+            false -> 0
+        end
+    end,
+    Normalised = lists:map( Normalise, Line ),
     tokenize( Normalised, 0 ).
 
 is_letter_test() ->
@@ -26,12 +24,12 @@ is_letter_test() ->
     false = is_letter( $! ),
     false = is_letter( $  ).
 
-is_letter( C ) ->
-    if
-        C >= $a andalso C =< $z -> true;
-        C >= $A andalso C =< $Z -> true;
-        true -> false
-    end.
+is_letter( C ) when C >= $a andalso C =< $z ->
+    true;
+is_letter( C ) when C >= $A andalso C =< $Z ->
+    true;
+is_letter( _ ) ->
+    false.
 
 tokenize_test() ->
     [] = tokenize( [], $x ),
