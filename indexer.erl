@@ -41,21 +41,10 @@ tokenize( String, Separator ) ->
 
 % reached the end of the string, append current token if not empty
 tokenize( Current, [], _Separator, Tokens ) ->
-    prepend_non_empty_token( Tokens, lists:reverse( Current ) );
+    util:prepend_not_empty( Tokens, lists:reverse( Current ) );
 % reached separator, start a new token and append current if not empty
 tokenize( Current, [ Separator | Cs ], Separator, Tokens ) ->
-    tokenize( [], Cs, Separator, prepend_non_empty_token( Tokens, lists:reverse( Current ) ) );
+    tokenize( [], Cs, Separator, util:prepend_not_empty( Tokens, lists:reverse( Current ) ) );
 % inside a token, append character to current token
 tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
-
-prepend_non_empty_token_test() ->
-    [] = prepend_non_empty_token( [], [] ),
-    [ "foo" ] = prepend_non_empty_token( [ "foo" ], [] ),
-    [ "bar" ] = prepend_non_empty_token( [], "bar" ),
-    [ "foo", "bar", "baz" ] = prepend_non_empty_token( [ "bar", "baz" ], "foo" ).
-
-prepend_non_empty_token( Tokens, [] ) ->
-    Tokens;
-prepend_non_empty_token( Tokens, Current ) ->
-    [ Current | Tokens ].
