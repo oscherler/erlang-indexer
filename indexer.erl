@@ -1,5 +1,5 @@
 -module(indexer).
--include_lib("eunit/include/eunit.hrl").
+-include("global.hrl").
 -export( [ extract_words/1 ] ).
 
 extract_words_test() ->

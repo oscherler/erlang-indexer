@@ -1,5 +1,5 @@
 -module(util).
--include_lib("eunit/include/eunit.hrl").
+-include("global.hrl").
 -export( [ unique/1, prepend_not_empty/2 ] ).
 
 % unique: keep first occurrence of each element
