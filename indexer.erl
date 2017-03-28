@@ -2,6 +2,20 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% index_find
+
+index_find( Word, Index ) ->
+    index_find( Word, Index, [] ).
+
+index_find( _Word, [], Before ) ->
+    { lists:reverse( Before ), null, [] };
+index_find( Word, [ Entry = { Word, _ } | Rest ], Before ) ->
+    { lists:reverse( Before ), Entry, Rest };
+index_find( Word, [ Entry = { Current, _ } | Rest ], Before ) when Word < Current ->
+    { lists:reverse( Before ), null, [ Entry | Rest ] };
+index_find( Word, [ Entry = { _Current, _ } | Rest ], Before ) ->
+    index_find( Word, Rest, [ Entry | Before ] ).
+
 % line_words
 
 line_words( Line ) ->
@@ -44,6 +58,138 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
 
 % tests
+
+index_find3_empty_test() ->
+    {
+        [],    % before
+        null,  % match
+        []     % after
+    } = index_find(
+        "foo", % needle
+        [],    % rest of index
+        []     % skipped (reversed)
+    ).
+index_find3_ended_test() ->
+    {
+        [      % before
+            { "apple", [] },
+            { "deer", [ 4 ] }
+        ],
+        null,  % match
+        []     % after
+    } = index_find(
+        "foo", % needle
+        [],    % rest of index
+        [      % skipped (reversed)
+            { "deer", [ 4 ] },
+            { "apple", [] }
+        ]
+    ).
+index_find3_found_end_test() ->
+    {
+        [
+            { "apple", [] },
+            { "deer", [ 4 ] }
+        ],
+        { "mango", [] },
+        []
+    } = index_find(
+        "mango",
+        [
+            { "mango", [] }
+        ],
+        [
+            { "deer", [ 4 ] },
+            { "apple", [] }
+        ]
+    ).
+index_find3_found_test() ->
+    {
+        [
+            { "apple", [] },
+            { "deer", [ 4 ] }
+        ],
+        { "mango", [] },
+        [
+            { "river", [] }
+        ]
+    } = index_find(
+        "mango",
+        [
+            { "mango", [] },
+            { "river", [] }
+        ],
+        [
+            { "deer", [ 4 ] },
+            { "apple", [] }
+        ]
+    ).
+index_find3_past_test() ->
+    {
+        [
+            { "apple", [] },
+            { "deer", [ 4 ] }
+        ],
+        null,
+        [
+            { "mango", [] }
+        ]
+    } = index_find(
+        "foo",
+        [
+            { "mango", [] }
+        ],
+        [
+            { "deer", [ 4 ] },
+            { "apple", [] }
+        ]
+    ).
+
+index_find_test() ->
+    Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
+
+    {
+        [],
+        null,
+        []
+    } = index_find( "foo", [] ),
+    {
+        [
+            { "apple", [] },
+            { "deer", [ 4 ] }
+        ],
+        null,
+        [
+            { "mango", [] }
+        ]
+    } = index_find( "foo", Index ),
+    {
+        [
+            { "apple", [] },
+            { "deer", [ 4 ] }
+        ],
+        null,
+        [
+            { "mango", [] }
+        ]
+    } = index_find( "hotel", Index ),
+    {
+        [
+            { "apple", [] }
+        ],
+        { "deer", [ 4 ] },
+        [
+            { "mango", [] }
+        ]
+    } = index_find( "deer", Index ),
+    {
+        [],
+        { "apple", [] },
+        [
+            { "deer", [ 4 ] },
+            { "mango", [] }
+        ]
+    } = index_find( "apple", Index ).
 
 line_words_test() ->
     [] = line_words(""),
