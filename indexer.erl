@@ -2,6 +2,11 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% line_words
+
+line_words( Line ) ->
+    util:unique( extract_words( Line ) ).
+
 % extract_words
 
 extract_words( Line ) ->
@@ -39,6 +44,13 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
 
 % tests
+
+line_words_test() ->
+    [] = line_words(""),
+    [ "foo" ] = line_words("foo"),
+    [ "foo" ] = line_words("  foo!"),
+    [ "foo", "bar" ] = line_words("  foo! -bar"),
+    [ "foo", "bar" ] = line_words("foo bar bar foo foo").
 
 extract_words_test() ->
     [] = extract_words(""),
