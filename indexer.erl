@@ -2,6 +2,16 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% index_add_word
+
+index_add_word( Word, Line, Index ) ->
+    { Before, Match, After } = index_find( Word, Index ),
+    Updated = case Match of
+        { Word, Lines } -> { Word, [ Line | Lines ] };
+        _ -> { Word, [ Line ] } % null
+    end,
+    Before ++ [ Updated | After ].
+
 % index_find
 
 index_find( Word, Index ) ->
@@ -58,6 +68,14 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
 
 % tests
+
+index_add_word_test() ->
+    Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
+    FoundIndex = [ { "apple", [] }, { "deer", [ 8, 4 ] }, { "mango", [] } ],
+    NewIndex = [ { "apple", [] }, { "deer", [ 4 ] }, { "hotel", [ 11 ] }, { "mango", [] } ],
+
+    FoundIndex = index_add_word( "deer", 8, Index ),
+    NewIndex = index_add_word( "hotel", 11, Index ).
 
 index_find3_empty_test() ->
     {
