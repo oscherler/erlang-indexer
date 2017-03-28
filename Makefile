@@ -18,5 +18,5 @@ clean:
 
 test:
 	@erl -noshell -pa ebin \
-	-eval 'eunit:test("ebin",[verbose])' \
+	-eval 'eunit:test( "ebin", [ verbose ] )' \
 	-s init stop

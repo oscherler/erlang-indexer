@@ -2,11 +2,7 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
-extract_words_test() ->
-    [] = extract_words(""),
-    [ "foo" ] = extract_words("foo"),
-    [ "foo", "bar" ] = extract_words("foo bar"),
-    [ "the", "quick", "brown", "fox" ] = extract_words("the “quick” brown fox!").
+% extract_words
 
 extract_words( Line ) ->
     Normalise = fun( C ) ->
@@ -18,11 +14,7 @@ extract_words( Line ) ->
     Normalised = lists:map( Normalise, Line ),
     tokenize( Normalised, 0 ).
 
-is_letter_test() ->
-    true = is_letter( $F ),
-    true = is_letter( $k ),
-    false = is_letter( $! ),
-    false = is_letter( $  ).
+% is_letter
 
 is_letter( C ) when C >= $a andalso C =< $z ->
     true;
@@ -31,10 +23,7 @@ is_letter( C ) when C >= $A andalso C =< $Z ->
 is_letter( _ ) ->
     false.
 
-tokenize_test() ->
-    [] = tokenize( [], $x ),
-    [ "A", "B" ] = tokenize( "AxB", $x ),
-    [ "foo", "bar" ] = tokenize( " foo   bar  ", $  ).
+% tokenize
 
 tokenize( String, Separator ) ->
     lists:reverse( tokenize( [], String, Separator, [] ) ).
@@ -48,3 +37,22 @@ tokenize( Current, [ Separator | Cs ], Separator, Tokens ) ->
 % inside a token, append character to current token
 tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
+
+% tests
+
+extract_words_test() ->
+    [] = extract_words(""),
+    [ "foo" ] = extract_words("foo"),
+    [ "foo", "bar" ] = extract_words("foo bar"),
+    [ "the", "quick", "brown", "fox" ] = extract_words("the “quick” brown fox!").
+
+is_letter_test() ->
+    true = is_letter( $F ),
+    true = is_letter( $k ),
+    false = is_letter( $! ),
+    false = is_letter( $  ).
+
+tokenize_test() ->
+    [] = tokenize( [], $x ),
+    [ "A", "B" ] = tokenize( "AxB", $x ),
+    [ "foo", "bar" ] = tokenize( " foo   bar  ", $  ).
