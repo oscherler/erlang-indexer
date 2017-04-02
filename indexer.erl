@@ -2,6 +2,14 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% index_add_line
+
+index_add_line( Line, Number, Index ) ->
+    Reduce = fun( Word, CurrentIndex ) ->
+        index_add_word( Word, Number, CurrentIndex )
+    end,
+    lists:foldl( Reduce, Index, line_words( Line ) ).
+
 % index_add_word
 
 index_add_word( Word, Line, Index ) ->
@@ -68,6 +76,16 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
 
 % tests
+
+index_add_line_test() ->
+    Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
+    SimpleIndex = [ { "apple", [ 12 ] }, { "deer", [ 12, 4 ] }, { "hotel", [ 12 ] }, { "mango", [] } ],
+    DedupIndex = [ { "apple", [ 15 ] }, { "deer", [ 4 ] }, { "hotel", [ 15 ] }, { "mango", [ 15 ] } ],
+    TokenIndex = [ { "apple", [ 13 ] }, { "deer", [ 13, 4 ] }, { "hotel", [ 13 ] }, { "mango", [] } ],
+
+    SimpleIndex = index_add_line( "deer apple hotel", 12, Index ),
+    DedupIndex = index_add_line( "hotel apple hotel mango mango mango", 15, Index ),
+    TokenIndex = index_add_line( "-hotel/apple++(deer)", 13, Index ).
 
 index_add_word_test() ->
     Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
