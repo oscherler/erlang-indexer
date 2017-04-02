@@ -1,32 +1,32 @@
 -module(tree).
 -include("global.hrl").
--export( [ tree_add/3, tree_find/2 ] ).
+-export( [ add/3, find/2 ] ).
 
-tree_find( Key, { Key, Data, _, _ } ) ->
+find( Key, { Key, Data, _, _ } ) ->
     Data;
-tree_find( Key, { K, _D, Before, _After } ) when Key < K ->
-    tree_find( Key, Before );
-tree_find( Key, { K, _D, _Before, After } ) when Key > K ->
-    tree_find( Key, After );
-tree_find( _Key, _ ) ->
+find( Key, { K, _D, Before, _After } ) when Key < K ->
+    find( Key, Before );
+find( Key, { K, _D, _Before, After } ) when Key > K ->
+    find( Key, After );
+find( _Key, _ ) ->
     none.
 
-tree_add( Key, Data, none ) ->
+add( Key, Data, none ) ->
     { Key, Data, none, none };
-tree_add( Key, Data, { Key, _D, Before, After } ) ->
+add( Key, Data, { Key, _D, Before, After } ) ->
     { Key, Data, Before, After };
-tree_add( Key, Data, { K, D, Before, After } ) when Key < K ->
-    { K, D, tree_add( Key, Data, Before ), After };
-tree_add( Key, Data, { K, D, Before, After } ) when Key > K ->
-    { K, D, Before, tree_add( Key, Data, After ) }.
+add( Key, Data, { K, D, Before, After } ) when Key < K ->
+    { K, D, add( Key, Data, Before ), After };
+add( Key, Data, { K, D, Before, After } ) when Key > K ->
+    { K, D, Before, add( Key, Data, After ) }.
 
-tree_add_empty_test() ->
+add_empty_test() ->
     ?assertEqual(
         { "key", "data", none, none },
-        tree_add( "key", "data", none )
+        add( "key", "data", none )
     ).
 
-tree_add_before_test() ->
+add_before_test() ->
     Tree = { "key", "data", none, none },
     ?assertEqual(
         {
@@ -34,10 +34,10 @@ tree_add_before_test() ->
             { "gig", "gata", none, none },
             none
         },
-        tree_add( "gig", "gata", Tree )
+        add( "gig", "gata", Tree )
     ).
 
-tree_add_after_test() ->
+add_after_test() ->
     Tree = { "key", "data", none, none },
     ?assertEqual(
         {
@@ -45,17 +45,17 @@ tree_add_after_test() ->
             none,
             { "rig", "rata", none, none }
         },
-        tree_add( "rig", "rata", Tree )
+        add( "rig", "rata", Tree )
     ).
 
-tree_replace_test() ->
+replace_test() ->
     Tree = { "key", "data", none, none },
     ?assertEqual(
         { "key", "rata", none, none },
-        tree_add( "key", "rata", Tree )
+        add( "key", "rata", Tree )
     ).
 
-tree_add_before_l2_test() ->
+add_before_l2_test() ->
     Tree = {
         "key", "data",
         { "gig", "gata", none, none },
@@ -71,10 +71,10 @@ tree_add_before_l2_test() ->
             },
             none
         },
-        tree_add( "fig", "fata", Tree )
+        add( "fig", "fata", Tree )
     ).
 
-tree_add_after_l2_test() ->
+add_after_l2_test() ->
     Tree = {
         "key", "data",
         none,
@@ -90,10 +90,10 @@ tree_add_after_l2_test() ->
                 { "tip", "tata", none, none }
             }
         },
-        tree_add( "tip", "tata", Tree )
+        add( "tip", "tata", Tree )
     ).
 
-tree_add_before_after_before_test() ->
+add_before_after_before_test() ->
     Tree = {
         "key", "data",
         {
@@ -117,10 +117,10 @@ tree_add_before_after_before_test() ->
             },
             { "rig", "rata", none, none }
         },
-        tree_add( "fat", "feta", Tree )
+        add( "fat", "feta", Tree )
     ).
 
-tree_add_after_before_before_after_test() ->
+add_after_before_before_after_test() ->
     Tree = {
         "key", "data",
         { "bib", "bata", none, none },
@@ -152,10 +152,10 @@ tree_add_after_before_before_after_test() ->
                 none
             }
         },
-        tree_add( "oil", "ota", Tree )
+        add( "oil", "ota", Tree )
     ).
 
-tree_replace_deep_test() ->
+replace_deep_test() ->
     Tree = {
         "key", "data",
         { "bib", "bata", none, none },
@@ -192,15 +192,15 @@ tree_replace_deep_test() ->
     },
     ?assertEqual(
         NewTree,
-        tree_add(
+        add(
             "oil", "otter",
-            tree_add(
+            add(
                 "pit", "pattern",
-                tree_add(
+                add(
                     "bib", "better",
-                    tree_add(
+                    add(
                         "nit", "neater",
-                        tree_add( "key", "kata", Tree )
+                        add( "key", "kata", Tree )
                     )
                 )
             )
@@ -208,15 +208,15 @@ tree_replace_deep_test() ->
     ),
     ?assertEqual(
         NewTree,
-        tree_add(
+        add(
             "key", "kata",
-            tree_add(
+            add(
                 "bib", "better",
-                tree_add(
+                add(
                     "oil", "otter",
-                    tree_add(
+                    add(
                         "pit", "pattern",
-                        tree_add( "nit", "neater", Tree )
+                        add( "nit", "neater", Tree )
                     )
                 )
             )
@@ -224,22 +224,22 @@ tree_replace_deep_test() ->
     ),
     ?assertEqual(
         NewTree,
-        tree_add(
+        add(
             "nit", "neater",
-            tree_add(
+            add(
                 "oil", "otter",
-                tree_add(
+                add(
                     "bib", "better",
-                    tree_add(
+                    add(
                         "key", "kata",
-                        tree_add( "pit", "pattern", Tree )
+                        add( "pit", "pattern", Tree )
                     )
                 )
             )
         )
     ).
 
-tree_find_test() ->
+find_test() ->
     Tree = {
         "key", "data",
         { "bib", "bata", none, none },
@@ -257,10 +257,10 @@ tree_find_test() ->
             none
         }
     },
-    ?assertEqual( "data", tree_find( "key", Tree ) ),
-    ?assertEqual( "bata", tree_find( "bib", Tree ) ),
-    ?assertEqual( "rata", tree_find( "rig", Tree ) ),
-    ?assertEqual( "pata", tree_find( "pit", Tree ) ),
-    ?assertEqual( "nata", tree_find( "nit", Tree ) ),
-    ?assertEqual( "ota", tree_find( "oil", Tree ) ),
-    ?assertEqual( none, tree_find( "foo", Tree ) ).
+    ?assertEqual( "data", find( "key", Tree ) ),
+    ?assertEqual( "bata", find( "bib", Tree ) ),
+    ?assertEqual( "rata", find( "rig", Tree ) ),
+    ?assertEqual( "pata", find( "pit", Tree ) ),
+    ?assertEqual( "nata", find( "nit", Tree ) ),
+    ?assertEqual( "ota", find( "oil", Tree ) ),
+    ?assertEqual( none, find( "foo", Tree ) ).
