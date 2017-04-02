@@ -2,6 +2,24 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% make_index
+
+make_index( Lines ) ->
+    Reduce = fun( Line, { N, CurrentIndex } ) ->
+        NewIndex = index_add_line( Line, N, CurrentIndex ),
+        { N + 1, NewIndex }
+    end,
+    { _, Index } = lists:foldl( Reduce, { 1, [] }, Lines ),
+    finish_index( Index ).
+
+% finish_index
+
+finish_index( Index ) ->
+    Map = fun( Entry ) ->
+        index_make_entry( Entry )
+    end,
+    lists:map( Map, Index ).
+
 % index_make_entry
 
 index_make_entry( { Word, Occurences } ) ->
