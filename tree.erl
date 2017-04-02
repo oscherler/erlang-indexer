@@ -1,6 +1,6 @@
 -module(tree).
 -include("global.hrl").
--export( [ add/3, find/2 ] ).
+-export( [ add/3, find/2, map/2, walk/2 ] ).
 
 find( Key, { Key, Data, _, _ } ) ->
     Data;
@@ -19,6 +19,18 @@ add( Key, Data, { K, D, Before, After } ) when Key < K ->
     { K, D, add( Key, Data, Before ), After };
 add( Key, Data, { K, D, Before, After } ) when Key > K ->
     { K, D, Before, add( Key, Data, After ) }.
+
+map( _Fun, none ) ->
+    none;
+map( Fun, { Key, Data, Before, After } ) ->
+    { Key, Fun( Data ), map( Fun, Before ), map( Fun, After ) }.
+
+walk( _Fun, none ) ->
+    ok;
+walk( Fun, { Key, Data, Before, After } ) ->
+    walk( Fun, Before ),
+    Fun( Key, Data ),
+    walk( Fun, After ).
 
 add_empty_test() ->
     ?assertEqual(
@@ -264,3 +276,46 @@ find_test() ->
     ?assertEqual( "nata", find( "nit", Tree ) ),
     ?assertEqual( "ota", find( "oil", Tree ) ),
     ?assertEqual( none, find( "foo", Tree ) ).
+
+map_test() ->
+    Tree = {
+        "key", "data",
+        { "bib", "bata", none, none },
+        {
+            "rig", "rata",
+            {
+                "pit", "pata",
+                {
+                    "nit", "nata",
+                    none,
+                    { "oil", "ota", none, none }
+                },
+                none
+            },
+            none
+        }
+    },
+    Reversed = {
+        "key", "atad",
+        { "bib", "atab", none, none },
+        {
+            "rig", "atar",
+            {
+                "pit", "atap",
+                {
+                    "nit", "atan",
+                    none,
+                    { "oil", "ato", none, none }
+                },
+                none
+            },
+            none
+        }
+    },
+    ?assertEqual(
+        Reversed,
+        map(
+            fun( D ) -> lists:reverse( D ) end,
+            Tree
+        )
+    ).
