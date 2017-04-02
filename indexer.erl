@@ -3,12 +3,16 @@
 -export( [ extract_words/1 ] ).
 
 % print_index
+% print the index by printing each word and its formatted list of occurences
 
 print_index( [ { Word, Occurences } | Es ] ) ->
     io:format( "~s: ~s~n", [ Word, format_occurences( Occurences ) ] ),
     print_index( Es );
 print_index( [] ) ->
     ok.
+
+% format_occurences
+% make a string of the line ranges for printing
 
 format_occurences( Occurences ) ->
     Map = fun( { L1, L2 } ) ->
@@ -22,6 +26,7 @@ format_occurences( Occurences ) ->
     string:join( lists:map( Map, Occurences ), ", " ).
 
 % print_file_index
+% read a file, index it, and print the result
 
 print_file_index( Name ) ->
     print_index(
@@ -31,6 +36,7 @@ print_file_index( Name ) ->
     ).
 
 % make_index
+% make and index by adding each line of the input and calling finish_index
 
 make_index( Lines ) ->
     Reduce = fun( Line, { N, CurrentIndex } ) ->
@@ -41,6 +47,7 @@ make_index( Lines ) ->
     finish_index( Index ).
 
 % finish_index
+% process_occurences on every entry of the index
 
 finish_index( Index ) ->
     Map = fun( { Word, Occurences } ) ->
@@ -49,6 +56,8 @@ finish_index( Index ) ->
     lists:map( Map, Index ).
 
 % process_occurences
+% collapse list of line numbers into a list of ranges
+% source list is in reversed order, result is in normal order
 
 process_occurences( Lines ) ->
     Reduce = fun
@@ -62,24 +71,27 @@ process_occurences( Lines ) ->
     lists:foldl( Reduce, [], Lines ).
 
 % index_add_line
+% add every word of the given line to the index
 
-index_add_line( Line, Number, Index ) ->
+index_add_line( Line, LineNumber, Index ) ->
     Reduce = fun( Word, CurrentIndex ) ->
-        index_add_word( Word, Number, CurrentIndex )
+        index_add_word( Word, LineNumber, CurrentIndex )
     end,
     lists:foldl( Reduce, Index, line_words( Line ) ).
 
 % index_add_word
+% add or update entry for Word by prepending given line to list of line numbers
 
-index_add_word( Word, Line, Index ) ->
+index_add_word( Word, LineNumber, Index ) ->
     { Before, Match, After } = index_find( Word, Index ),
     Updated = case Match of
-        { Word, Lines } -> { Word, [ Line | Lines ] };
-        _ -> { Word, [ Line ] } % null
+        { Word, LineNumbers } -> { Word, [ LineNumber | LineNumbers ] };
+        _ -> { Word, [ LineNumber ] } % null
     end,
     Before ++ [ Updated | After ].
 
 % index_find
+% find an entry with { Word, _ } in a sorted list of entries
 
 index_find( Word, Index ) ->
     index_find( Word, Index, [] ).
@@ -94,11 +106,13 @@ index_find( Word, [ Entry = { _Current, _ } | Rest ], Before ) ->
     index_find( Word, Rest, [ Entry | Before ] ).
 
 % line_words
+% take unique words from a line of text
 
 line_words( Line ) ->
     util:unique( extract_words( Line ) ).
 
 % extract_words
+% tokenize line on consecutive letters
 
 extract_words( Line ) ->
     Normalise = fun( C ) ->
@@ -120,6 +134,8 @@ is_letter( _ ) ->
     false.
 
 % tokenize
+% make a list of tokens separated by Separator
+% ignore empty tokens
 
 tokenize( String, Separator ) ->
     lists:reverse( tokenize( [], String, Separator, [] ) ).
