@@ -5,11 +5,13 @@
 % print_index
 % print the index by printing each word and its formatted list of occurences
 
-print_index( [ { Word, Occurences } | Es ] ) ->
-    io:format( "~s: ~s~n", [ Word, format_occurences( Occurences ) ] ),
-    print_index( Es );
-print_index( [] ) ->
-    ok.
+print_index( Index ) ->
+    tree:walk(
+        fun( Word, Occurences ) ->
+            io:format( "~s: ~s~n", [ Word, format_occurences( Occurences ) ] )
+        end,
+        Index
+    ).
 
 % format_occurences
 % make a string of the line ranges for printing
@@ -43,17 +45,17 @@ make_index( Lines ) ->
         NewIndex = index_add_line( Line, N, CurrentIndex ),
         { N + 1, NewIndex }
     end,
-    { _, Index } = lists:foldl( Reduce, { 1, [] }, Lines ),
+    { _, Index } = lists:foldl( Reduce, { 1, none }, Lines ),
     finish_index( Index ).
 
 % finish_index
 % process_occurences on every entry of the index
 
 finish_index( Index ) ->
-    Map = fun( { Word, Occurences } ) ->
-        { Word, process_occurences( Occurences ) }
+    Map = fun( Occurences ) ->
+        process_occurences( Occurences )
     end,
-    lists:map( Map, Index ).
+    tree:map( Map, Index ).
 
 % process_occurences
 % collapse list of line numbers into a list of ranges
@@ -83,27 +85,12 @@ index_add_line( Line, LineNumber, Index ) ->
 % add or update entry for Word by prepending given line to list of line numbers
 
 index_add_word( Word, LineNumber, Index ) ->
-    { Before, Match, After } = index_find( Word, Index ),
-    Updated = case Match of
-        { Word, LineNumbers } -> { Word, [ LineNumber | LineNumbers ] };
-        _ -> { Word, [ LineNumber ] } % null
+    LineNumbers = tree:find( Word, Index ),
+    Updated = case LineNumbers of
+        none -> [ LineNumber ];
+        _ -> [ LineNumber | LineNumbers ]
     end,
-    Before ++ [ Updated | After ].
-
-% index_find
-% find an entry with { Word, _ } in a sorted list of entries
-
-index_find( Word, Index ) ->
-    index_find( Word, Index, [] ).
-
-index_find( _Word, [], Before ) ->
-    { lists:reverse( Before ), null, [] };
-index_find( Word, [ Entry = { Word, _ } | Rest ], Before ) ->
-    { lists:reverse( Before ), Entry, Rest };
-index_find( Word, [ Entry = { Current, _ } | Rest ], Before ) when Word < Current ->
-    { lists:reverse( Before ), null, [ Entry | Rest ] };
-index_find( Word, [ Entry = { _Current, _ } | Rest ], Before ) ->
-    index_find( Word, Rest, [ Entry | Before ] ).
+    tree:add( Word, Updated, Index ).
 
 % line_words
 % take unique words from a line of text
@@ -160,33 +147,28 @@ make_index_test() ->
         "carrot date carrot fig",
         "+fig%gumbo-banana"
     ],
-    ?assertEqual(
-        [
-            { "apple", [ { 1, 1 } ] },
-            { "banana", [ { 1, 1 }, { 3, 3 } ] },
-            { "carrot", [ { 2, 2 } ] },
-            { "date", [ { 2, 2 } ] },
-            { "fig", [ { 1, 3 } ] },
-            { "gumbo", [ { 3, 3 } ] }
-        ],
-        make_index( Lines )
-    ).
-
+    Index = make_index( Lines ),
+    ?assertEqual( [ { 1, 1 } ], tree:find( "apple", Index ) ),
+    ?assertEqual( [ { 1, 1 }, { 3, 3 } ], tree:find( "banana", Index ) ),
+    ?assertEqual( [ { 2, 2 } ], tree:find( "carrot", Index ) ),
+    ?assertEqual( [ { 2, 2 } ], tree:find( "date", Index ) ),
+    ?assertEqual( [ { 1, 3 } ], tree:find( "fig", Index ) ),
+    ?assertEqual( [ { 3, 3 } ], tree:find( "gumbo", Index ) ).
 
 finish_index_test() ->
-    Index = [
-        { "apple", [ 42, 38 ] },
-        { "banana", [ 5, 4, 3 ] },
-        { "carrot", [ 42, 38, 12, 11, 5, 4, 3 ] }
-    ],
-    ?assertEqual(
-        [
-            { "apple", [ { 38, 38 }, { 42, 42 } ] },
-            { "banana", [ { 3, 5 } ] },
-            { "carrot", [ { 3, 5 }, { 11, 12 }, { 38, 38 }, {42, 42 } ] }
-        ],
-        finish_index( Index )
-    ).
+    Index =
+        tree:add( "apple", [ 42, 38 ],
+            tree:add( "banana", [ 5, 4, 3 ],
+                tree:add( "carrot", [ 42, 38, 12, 11, 5, 4, 3 ],
+                    none
+                )
+            )
+        ),
+    Finished = finish_index( Index ),
+
+    ?assertEqual( [ { 38, 38 }, { 42, 42 } ], tree:find( "apple", Finished ) ),
+    ?assertEqual( [ { 3, 5 } ], tree:find( "banana", Finished ) ),
+    ?assertEqual( [ { 3, 5 }, { 11, 12 }, { 38, 38 }, {42, 42 } ], tree:find( "carrot", Finished ) ).
 
 process_occurences_test() ->
     ?assertEqual( [], process_occurences( [] ) ),
@@ -199,193 +181,52 @@ process_occurences_test() ->
     ).
 
 index_add_line_test() ->
-    Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
+    Index =
+        tree:add( "apple", [],
+            tree:add( "deer", [ 4 ],
+                tree:add( "mango", [],
+                    none
+                )
+            )
+        ),
 
-    ?assertEqual(
-        [ { "apple", [ 12 ] }, { "deer", [ 12, 4 ] }, { "hotel", [ 12 ] }, { "mango", [] } ],
-        index_add_line( "deer apple hotel", 12, Index )
-    ),
-    ?assertEqual(
-        [ { "apple", [ 15 ] }, { "deer", [ 4 ] }, { "hotel", [ 15 ] }, { "mango", [ 15 ] } ],
-        index_add_line( "hotel apple hotel mango mango mango", 15, Index )
-    ),
-    ?assertEqual(
-        [ { "apple", [ 13 ] }, { "deer", [ 13, 4 ] }, { "hotel", [ 13 ] }, { "mango", [] } ],
-        index_add_line( "-hotel/apple++(deer)", 13, Index )
-    ).
+    I1 = index_add_line( "deer apple hotel", 12, Index ),
+    ?assertEqual( [ 12 ], tree:find( "apple", I1 ) ),
+    ?assertEqual( [ 12, 4 ], tree:find( "deer", I1 ) ),
+    ?assertEqual( [ 12 ], tree:find( "hotel", I1 ) ),
+    ?assertEqual( [], tree:find( "mango", I1 ) ),
+
+    I2 = index_add_line( "hotel apple hotel mango mango mango", 15, Index ),
+    ?assertEqual( [ 15 ], tree:find( "apple", I2 ) ),
+    ?assertEqual( [ 4 ], tree:find( "deer", I2 ) ),
+    ?assertEqual( [ 15 ], tree:find( "hotel", I2 ) ),
+    ?assertEqual( [ 15 ], tree:find( "mango", I2 ) ),
+
+    I3 = index_add_line( "-hotel/apple++(deer)", 13, Index ),
+    ?assertEqual( [ 13 ], tree:find( "apple", I3 ) ),
+    ?assertEqual( [ 13, 4 ], tree:find( "deer", I3 ) ),
+    ?assertEqual( [ 13 ], tree:find( "hotel", I3 ) ),
+    ?assertEqual( [], tree:find( "mango", I3 ) ).
 
 index_add_word_test() ->
-    Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
+    Index =
+        tree:add( "apple", [],
+            tree:add( "deer", [ 4 ],
+                tree:add( "mango", [],
+                    none
+                )
+            )
+        ),
 
     ?assertEqual(
-        [ { "apple", [] }, { "deer", [ 8, 4 ] }, { "mango", [] } ],
-        index_add_word( "deer", 8, Index )
+        [ 8, 4 ],
+        tree:find( "deer", index_add_word( "deer", 8, Index ) )
     ),
-    ?assertEqual(
-        [ { "apple", [] }, { "deer", [ 4 ] }, { "hotel", [ 11 ] }, { "mango", [] } ],
-        index_add_word( "hotel", 11, Index )
-    ).
 
-index_find3_empty_test() ->
+    index_add_word( "hotel", 11, Index ),
     ?assertEqual(
-        {
-            [],    % before
-            null,  % match
-            []     % after
-        },
-        index_find(
-            "foo", % needle
-            [],    % rest of index
-            []     % skipped (reversed)
-        )
-    ).
-index_find3_ended_test() ->
-    ?assertEqual(
-        {
-            [      % before
-                { "apple", [] },
-                { "deer", [ 4 ] }
-            ],
-            null,  % match
-            []     % after
-        },
-        index_find(
-            "foo", % needle
-            [],    % rest of index
-            [      % skipped (reversed)
-                { "deer", [ 4 ] },
-                { "apple", [] }
-            ]
-        )
-    ).
-index_find3_found_end_test() ->
-    ?assertEqual(
-        {
-            [
-                { "apple", [] },
-                { "deer", [ 4 ] }
-            ],
-            { "mango", [] },
-            []
-        },
-        index_find(
-            "mango",
-            [
-                { "mango", [] }
-            ],
-            [
-                { "deer", [ 4 ] },
-                { "apple", [] }
-            ]
-        )
-    ).
-index_find3_found_test() ->
-    ?assertEqual(
-        {
-            [
-                { "apple", [] },
-                { "deer", [ 4 ] }
-            ],
-            { "mango", [] },
-            [
-                { "river", [] }
-            ]
-        },
-        index_find(
-            "mango",
-            [
-                { "mango", [] },
-                { "river", [] }
-            ],
-            [
-                { "deer", [ 4 ] },
-                { "apple", [] }
-            ]
-        )
-    ).
-index_find3_past_test() ->
-    ?assertEqual(
-        {
-            [
-                { "apple", [] },
-                { "deer", [ 4 ] }
-            ],
-            null,
-            [
-                { "mango", [] }
-            ]
-        },
-        index_find(
-            "foo",
-            [
-                { "mango", [] }
-            ],
-            [
-                { "deer", [ 4 ] },
-                { "apple", [] }
-            ]
-        )
-    ).
-
-index_find_test() ->
-    Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
-
-    ?assertEqual(
-        {
-            [],
-            null,
-            []
-        },
-        index_find( "foo", [] )
-    ),
-    ?assertEqual(
-        {
-            [
-                { "apple", [] },
-                { "deer", [ 4 ] }
-            ],
-            null,
-            [
-                { "mango", [] }
-            ]
-        },
-        index_find( "foo", Index )
-    ),
-    ?assertEqual(
-        {
-            [
-                { "apple", [] },
-                { "deer", [ 4 ] }
-            ],
-            null,
-            [
-                { "mango", [] }
-            ]
-        },
-        index_find( "hotel", Index )
-    ),
-    ?assertEqual(
-        {
-            [
-                { "apple", [] }
-            ],
-            { "deer", [ 4 ] },
-            [
-                { "mango", [] }
-            ]
-        },
-        index_find( "deer", Index )
-    ),
-    ?assertEqual(
-        {
-            [],
-            { "apple", [] },
-            [
-                { "deer", [ 4 ] },
-                { "mango", [] }
-            ]
-        },
-        index_find( "apple", Index )
+        [ 11 ],
+        tree:find( "hotel", index_add_word( "hotel", 11, Index ) )
     ).
 
 line_words_test() ->
