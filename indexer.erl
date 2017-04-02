@@ -154,6 +154,40 @@ format_occurences_test() ->
     ?assertEqual( "3-5", format_occurences( [ { 3, 5 } ] ) ),
     ?assertEqual( "1, 3-5, 6-12", format_occurences( [ { 1, 1 }, { 3, 5 }, { 6, 12 } ] ) ).
 
+make_index_test() ->
+    Lines = [
+        "apple  banana fig",
+        "carrot date carrot fig",
+        "+fig%gumbo-banana"
+    ],
+    ?assertEqual(
+        [
+            { "apple", [ { 1, 1 } ] },
+            { "banana", [ { 1, 1 }, { 3, 3 } ] },
+            { "carrot", [ { 2, 2 } ] },
+            { "date", [ { 2, 2 } ] },
+            { "fig", [ { 1, 3 } ] },
+            { "gumbo", [ { 3, 3 } ] }
+        ],
+        make_index( Lines )
+    ).
+
+
+finish_index_test() ->
+    Index = [
+        { "apple", [ 42, 38 ] },
+        { "banana", [ 5, 4, 3 ] },
+        { "carrot", [ 42, 38, 12, 11, 5, 4, 3 ] }
+    ],
+    ?assertEqual(
+        [
+            { "apple", [ { 38, 38 }, { 42, 42 } ] },
+            { "banana", [ { 3, 5 } ] },
+            { "carrot", [ { 3, 5 }, { 11, 12 }, { 38, 38 }, {42, 42 } ] }
+        ],
+        finish_index( Index )
+    ).
+
 process_occurences_test() ->
     ?assertEqual( [], process_occurences( [] ) ),
     ?assertEqual( [ { 42, 42 } ], process_occurences( [ 42 ] ) ),
