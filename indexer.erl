@@ -11,9 +11,13 @@ print_index( [] ) ->
     ok.
 
 format_occurences( Occurences ) ->
-    Map = fun
-        ( { L, L } ) -> io_lib:format( "~b", [ L ] );
-        ( { L1, L2 } ) -> io_lib:format( "~b-~b", [ L1, L2 ] )
+    Map = fun( { L1, L2 } ) ->
+        lists:flatten(
+            case L1 == L2 of
+                true -> io_lib:format( "~b", [ L1 ] );
+                _ -> io_lib:format( "~b-~b", [ L1, L2 ] )
+            end
+        )
     end,
     string:join( lists:map( Map, Occurences ), ", " ).
 
@@ -140,6 +144,13 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
 index_make_entry_test() ->
     { "apple", [] } = index_make_entry( { "apple", [] } ),
     { "banana", [ { 42, 42 } ] } = index_make_entry( { "banana", [ 42 ] } ).
+
+format_occurences_test() ->
+    ?assertEqual( "", format_occurences( [] ) ),
+    ?assertEqual( "3", format_occurences( [ { 3, 3 } ] ) ),
+    ?assertEqual( "3, 8", format_occurences( [ { 3, 3 }, { 8, 8 } ] ) ),
+    ?assertEqual( "3-5", format_occurences( [ { 3, 5 } ] ) ),
+    ?assertEqual( "1, 3-5, 6-12", format_occurences( [ { 1, 1 }, { 3, 5 }, { 6, 12 } ] ) ).
 
 process_occurences_test() ->
     [] = process_occurences( [] ),
