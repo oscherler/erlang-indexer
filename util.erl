@@ -25,13 +25,13 @@ prepend_not_empty( Tokens, Current ) ->
 % tests
 
 unique_test() ->
-    [] = unique( [] ),
-    [ 7, 3, 8, 5 ] = unique( [ 7, 3, 8, 5 ] ),
-    [ 2 ] = unique( [ 2, 2 ] ),
-    [ 7, 3, 8, 5 ] = unique( [ 7, 3, 8, 7, 5, 3 ] ).
+    ?assertEqual( [], unique( [] ) ),
+    ?assertEqual( [ 7, 3, 8, 5 ], unique( [ 7, 3, 8, 5 ] ) ),
+    ?assertEqual( [ 2 ], unique( [ 2, 2 ] ) ),
+    ?assertEqual( [ 7, 3, 8, 5 ], unique( [ 7, 3, 8, 7, 5, 3 ] ) ).
 
 prepend_not_empty_test() ->
-    [] = prepend_not_empty( [], "" ),
-    [ "foo" ] = prepend_not_empty( [ "foo" ], "" ),
-    [ "bar" ] = prepend_not_empty( [], "bar" ),
-    [ "foo", "bar", "baz" ] = prepend_not_empty( [ "bar", "baz" ], "foo" ).
+    ?assertEqual( [], prepend_not_empty( [], "" ) ),
+    ?assertEqual( [ "foo" ], prepend_not_empty( [ "foo" ], "" ) ),
+    ?assertEqual( [ "bar" ], prepend_not_empty( [], "bar" ) ),
+    ?assertEqual( [ "foo", "bar", "baz" ], prepend_not_empty( [ "bar", "baz" ], "foo" ) ).

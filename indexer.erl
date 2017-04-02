@@ -155,182 +155,228 @@ format_occurences_test() ->
     ?assertEqual( "1, 3-5, 6-12", format_occurences( [ { 1, 1 }, { 3, 5 }, { 6, 12 } ] ) ).
 
 process_occurences_test() ->
-    [] = process_occurences( [] ),
-    [ { 42, 42 } ] = process_occurences( [ 42 ] ),
-    [ { 21, 21 }, { 42, 42 } ] = process_occurences( [ 42, 21 ] ),
-    [ { 3, 5 }, { 7, 7 } ] = process_occurences( [ 7, 5, 4, 3 ] ),
-    [ { 1, 5 }, { 8, 8 }, { 11, 11 }, { 13, 14 } ] = process_occurences( [ 14, 13, 11, 8, 5, 4, 3, 2, 1 ] ).
+    ?assertEqual( [], process_occurences( [] ) ),
+    ?assertEqual( [ { 42, 42 } ], process_occurences( [ 42 ] ) ),
+    ?assertEqual( [ { 21, 21 }, { 42, 42 } ], process_occurences( [ 42, 21 ] ) ),
+    ?assertEqual( [ { 3, 5 }, { 7, 7 } ], process_occurences( [ 7, 5, 4, 3 ] ) ),
+    ?assertEqual(
+        [ { 1, 5 }, { 8, 8 }, { 11, 11 }, { 13, 14 } ],
+        process_occurences( [ 14, 13, 11, 8, 5, 4, 3, 2, 1 ] )
+    ).
 
 index_add_line_test() ->
     Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
-    SimpleIndex = [ { "apple", [ 12 ] }, { "deer", [ 12, 4 ] }, { "hotel", [ 12 ] }, { "mango", [] } ],
-    DedupIndex = [ { "apple", [ 15 ] }, { "deer", [ 4 ] }, { "hotel", [ 15 ] }, { "mango", [ 15 ] } ],
-    TokenIndex = [ { "apple", [ 13 ] }, { "deer", [ 13, 4 ] }, { "hotel", [ 13 ] }, { "mango", [] } ],
 
-    SimpleIndex = index_add_line( "deer apple hotel", 12, Index ),
-    DedupIndex = index_add_line( "hotel apple hotel mango mango mango", 15, Index ),
-    TokenIndex = index_add_line( "-hotel/apple++(deer)", 13, Index ).
+    ?assertEqual(
+        [ { "apple", [ 12 ] }, { "deer", [ 12, 4 ] }, { "hotel", [ 12 ] }, { "mango", [] } ],
+        index_add_line( "deer apple hotel", 12, Index )
+    ),
+    ?assertEqual(
+        [ { "apple", [ 15 ] }, { "deer", [ 4 ] }, { "hotel", [ 15 ] }, { "mango", [ 15 ] } ],
+        index_add_line( "hotel apple hotel mango mango mango", 15, Index )
+    ),
+    ?assertEqual(
+        [ { "apple", [ 13 ] }, { "deer", [ 13, 4 ] }, { "hotel", [ 13 ] }, { "mango", [] } ],
+        index_add_line( "-hotel/apple++(deer)", 13, Index )
+    ).
 
 index_add_word_test() ->
     Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
-    FoundIndex = [ { "apple", [] }, { "deer", [ 8, 4 ] }, { "mango", [] } ],
-    NewIndex = [ { "apple", [] }, { "deer", [ 4 ] }, { "hotel", [ 11 ] }, { "mango", [] } ],
 
-    FoundIndex = index_add_word( "deer", 8, Index ),
-    NewIndex = index_add_word( "hotel", 11, Index ).
+    ?assertEqual(
+        [ { "apple", [] }, { "deer", [ 8, 4 ] }, { "mango", [] } ],
+        index_add_word( "deer", 8, Index )
+    ),
+    ?assertEqual(
+        [ { "apple", [] }, { "deer", [ 4 ] }, { "hotel", [ 11 ] }, { "mango", [] } ],
+        index_add_word( "hotel", 11, Index )
+    ).
 
 index_find3_empty_test() ->
-    {
-        [],    % before
-        null,  % match
-        []     % after
-    } = index_find(
-        "foo", % needle
-        [],    % rest of index
-        []     % skipped (reversed)
+    ?assertEqual(
+        {
+            [],    % before
+            null,  % match
+            []     % after
+        },
+        index_find(
+            "foo", % needle
+            [],    % rest of index
+            []     % skipped (reversed)
+        )
     ).
 index_find3_ended_test() ->
-    {
-        [      % before
-            { "apple", [] },
-            { "deer", [ 4 ] }
-        ],
-        null,  % match
-        []     % after
-    } = index_find(
-        "foo", % needle
-        [],    % rest of index
-        [      % skipped (reversed)
-            { "deer", [ 4 ] },
-            { "apple", [] }
-        ]
+    ?assertEqual(
+        {
+            [      % before
+                { "apple", [] },
+                { "deer", [ 4 ] }
+            ],
+            null,  % match
+            []     % after
+        },
+        index_find(
+            "foo", % needle
+            [],    % rest of index
+            [      % skipped (reversed)
+                { "deer", [ 4 ] },
+                { "apple", [] }
+            ]
+        )
     ).
 index_find3_found_end_test() ->
-    {
-        [
-            { "apple", [] },
-            { "deer", [ 4 ] }
-        ],
-        { "mango", [] },
-        []
-    } = index_find(
-        "mango",
-        [
-            { "mango", [] }
-        ],
-        [
-            { "deer", [ 4 ] },
-            { "apple", [] }
-        ]
+    ?assertEqual(
+        {
+            [
+                { "apple", [] },
+                { "deer", [ 4 ] }
+            ],
+            { "mango", [] },
+            []
+        },
+        index_find(
+            "mango",
+            [
+                { "mango", [] }
+            ],
+            [
+                { "deer", [ 4 ] },
+                { "apple", [] }
+            ]
+        )
     ).
 index_find3_found_test() ->
-    {
-        [
-            { "apple", [] },
-            { "deer", [ 4 ] }
-        ],
-        { "mango", [] },
-        [
-            { "river", [] }
-        ]
-    } = index_find(
-        "mango",
-        [
+    ?assertEqual(
+        {
+            [
+                { "apple", [] },
+                { "deer", [ 4 ] }
+            ],
             { "mango", [] },
-            { "river", [] }
-        ],
-        [
-            { "deer", [ 4 ] },
-            { "apple", [] }
-        ]
+            [
+                { "river", [] }
+            ]
+        },
+        index_find(
+            "mango",
+            [
+                { "mango", [] },
+                { "river", [] }
+            ],
+            [
+                { "deer", [ 4 ] },
+                { "apple", [] }
+            ]
+        )
     ).
 index_find3_past_test() ->
-    {
-        [
-            { "apple", [] },
-            { "deer", [ 4 ] }
-        ],
-        null,
-        [
-            { "mango", [] }
-        ]
-    } = index_find(
-        "foo",
-        [
-            { "mango", [] }
-        ],
-        [
-            { "deer", [ 4 ] },
-            { "apple", [] }
-        ]
+    ?assertEqual(
+        {
+            [
+                { "apple", [] },
+                { "deer", [ 4 ] }
+            ],
+            null,
+            [
+                { "mango", [] }
+            ]
+        },
+        index_find(
+            "foo",
+            [
+                { "mango", [] }
+            ],
+            [
+                { "deer", [ 4 ] },
+                { "apple", [] }
+            ]
+        )
     ).
 
 index_find_test() ->
     Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
 
-    {
-        [],
-        null,
-        []
-    } = index_find( "foo", [] ),
-    {
-        [
-            { "apple", [] },
-            { "deer", [ 4 ] }
-        ],
-        null,
-        [
-            { "mango", [] }
-        ]
-    } = index_find( "foo", Index ),
-    {
-        [
-            { "apple", [] },
-            { "deer", [ 4 ] }
-        ],
-        null,
-        [
-            { "mango", [] }
-        ]
-    } = index_find( "hotel", Index ),
-    {
-        [
-            { "apple", [] }
-        ],
-        { "deer", [ 4 ] },
-        [
-            { "mango", [] }
-        ]
-    } = index_find( "deer", Index ),
-    {
-        [],
-        { "apple", [] },
-        [
+    ?assertEqual(
+        {
+            [],
+            null,
+            []
+        },
+        index_find( "foo", [] )
+    ),
+    ?assertEqual(
+        {
+            [
+                { "apple", [] },
+                { "deer", [ 4 ] }
+            ],
+            null,
+            [
+                { "mango", [] }
+            ]
+        },
+        index_find( "foo", Index )
+    ),
+    ?assertEqual(
+        {
+            [
+                { "apple", [] },
+                { "deer", [ 4 ] }
+            ],
+            null,
+            [
+                { "mango", [] }
+            ]
+        },
+        index_find( "hotel", Index )
+    ),
+    ?assertEqual(
+        {
+            [
+                { "apple", [] }
+            ],
             { "deer", [ 4 ] },
-            { "mango", [] }
-        ]
-    } = index_find( "apple", Index ).
+            [
+                { "mango", [] }
+            ]
+        },
+        index_find( "deer", Index )
+    ),
+    ?assertEqual(
+        {
+            [],
+            { "apple", [] },
+            [
+                { "deer", [ 4 ] },
+                { "mango", [] }
+            ]
+        },
+        index_find( "apple", Index )
+    ).
 
 line_words_test() ->
-    [] = line_words(""),
-    [ "foo" ] = line_words("foo"),
-    [ "foo" ] = line_words("  foo!"),
-    [ "foo", "bar" ] = line_words("  foo! -bar"),
-    [ "foo", "bar" ] = line_words("foo bar bar foo foo").
+    ?assertEqual( [], line_words("") ),
+    ?assertEqual( [ "foo" ], line_words("foo") ),
+    ?assertEqual( [ "foo" ], line_words("  foo!") ),
+    ?assertEqual( [ "foo", "bar" ], line_words("  foo! -bar") ),
+    ?assertEqual( [ "foo", "bar" ], line_words("foo bar bar foo foo") ).
 
 extract_words_test() ->
-    [] = extract_words(""),
-    [ "foo" ] = extract_words("foo"),
-    [ "foo", "bar" ] = extract_words("foo bar"),
-    [ "the", "quick", "brown", "fox" ] = extract_words("the “quick” brown fox!").
+    ?assertEqual( [], extract_words("") ),
+    ?assertEqual( [ "foo" ], extract_words("foo") ),
+    ?assertEqual( [ "foo", "bar" ], extract_words("foo bar") ),
+    ?assertEqual(
+        [ "the", "quick", "brown", "fox" ],
+        extract_words("the “quick” brown fox!")
+    ).
 
 lowercase_letter_test() ->
-    $f = lowercase_letter( $F ),
-    $k = lowercase_letter( $k ),
-    false = lowercase_letter( $! ),
-    false = lowercase_letter( $  ).
+    ?assertEqual( $f, lowercase_letter( $F ) ),
+    ?assertEqual( $k, lowercase_letter( $k ) ),
+    ?assertEqual( false, lowercase_letter( $! ) ),
+    ?assertEqual( false, lowercase_letter( $  ) ).
 
 tokenize_test() ->
-    [] = tokenize( [], $x ),
-    [ "A", "B" ] = tokenize( "AxB", $x ),
-    [ "foo", "bar" ] = tokenize( " foo   bar  ", $  ).
+    ?assertEqual( [], tokenize( [], $x ) ),
+    ?assertEqual( [ "A", "B" ], tokenize( "AxB", $x ) ),
+    ?assertEqual( [ "foo", "bar" ], tokenize( " foo   bar  ", $  ) ).
