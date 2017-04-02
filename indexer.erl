@@ -1,6 +1,6 @@
 -module(indexer).
 -include("global.hrl").
--export( [ extract_words/1 ] ).
+-export( [ make_index/1, print_index/1, print_file_index/1 ] ).
 
 % print_index
 % print the index by printing each word and its formatted list of occurences
