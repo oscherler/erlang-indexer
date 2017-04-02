@@ -2,6 +2,24 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% index_make_entry
+
+index_make_entry( { Word, Occurences } ) ->
+    { Word, process_occurences( Occurences ) }.
+
+% process_occurences
+
+process_occurences( Lines ) ->
+    Reduce = fun
+        ( Line, [] ) ->
+            [ { Line, Line } ];
+        ( Line, [ { L1, L2 } | Es ] ) when L1 == Line + 1 ->
+            [ { Line, L2 } | Es ];
+        ( Line, [ E | Es ] ) ->
+            [ { Line, Line }, E | Es ]
+    end,
+    lists:foldl( Reduce, [], Lines ).
+
 % index_add_line
 
 index_add_line( Line, Number, Index ) ->
@@ -76,6 +94,17 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
 
 % tests
+
+index_make_entry_test() ->
+    { "apple", [] } = index_make_entry( { "apple", [] } ),
+    { "banana", [ { 42, 42 } ] } = index_make_entry( { "banana", [ 42 ] } ).
+
+process_occurences_test() ->
+    [] = process_occurences( [] ),
+    [ { 42, 42 } ] = process_occurences( [ 42 ] ),
+    [ { 21, 21 }, { 42, 42 } ] = process_occurences( [ 42, 21 ] ),
+    [ { 3, 5 }, { 7, 7 } ] = process_occurences( [ 7, 5, 4, 3 ] ),
+    [ { 1, 5 }, { 8, 8 }, { 11, 11 }, { 13, 14 } ] = process_occurences( [ 14, 13, 11, 8, 5, 4, 3, 2, 1 ] ).
 
 index_add_line_test() ->
     Index = [ { "apple", [] }, { "deer", [ 4 ] }, { "mango", [] } ],
