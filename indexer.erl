@@ -43,15 +43,10 @@ make_index( Lines ) ->
 % finish_index
 
 finish_index( Index ) ->
-    Map = fun( Entry ) ->
-        index_make_entry( Entry )
+    Map = fun( { Word, Occurences } ) ->
+        { Word, process_occurences( Occurences ) }
     end,
     lists:map( Map, Index ).
-
-% index_make_entry
-
-index_make_entry( { Word, Occurences } ) ->
-    { Word, process_occurences( Occurences ) }.
 
 % process_occurences
 
@@ -140,10 +135,6 @@ tokenize( Current, [ C | Cs ], Separator, Tokens ) ->
     tokenize( [ C | Current ], Cs, Separator, Tokens ).
 
 % tests
-
-index_make_entry_test() ->
-    { "apple", [] } = index_make_entry( { "apple", [] } ),
-    { "banana", [ { 42, 42 } ] } = index_make_entry( { "banana", [ 42 ] } ).
 
 format_occurences_test() ->
     ?assertEqual( "", format_occurences( [] ) ),
