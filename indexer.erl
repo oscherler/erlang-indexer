@@ -115,22 +115,17 @@ line_words( Line ) ->
 % tokenize line on consecutive letters
 
 extract_words( Line ) ->
-    Normalise = fun( C ) ->
-        case is_letter( C ) of
-            true  -> C;
-            false -> 0
-        end
-    end,
+    Normalise = fun( C ) -> lowercase_letter( C ) end,
     Normalised = lists:map( Normalise, Line ),
-    tokenize( Normalised, 0 ).
+    tokenize( Normalised, false ).
 
 % is_letter
 
-is_letter( C ) when C >= $a andalso C =< $z ->
-    true;
-is_letter( C ) when C >= $A andalso C =< $Z ->
-    true;
-is_letter( _ ) ->
+lowercase_letter( C ) when C >= $a andalso C =< $z ->
+    C;
+lowercase_letter( C ) when C >= $A andalso C =< $Z ->
+    C + $a - $A;
+lowercase_letter( _ ) ->
     false.
 
 % tokenize
@@ -329,11 +324,11 @@ extract_words_test() ->
     [ "foo", "bar" ] = extract_words("foo bar"),
     [ "the", "quick", "brown", "fox" ] = extract_words("the “quick” brown fox!").
 
-is_letter_test() ->
-    true = is_letter( $F ),
-    true = is_letter( $k ),
-    false = is_letter( $! ),
-    false = is_letter( $  ).
+lowercase_letter_test() ->
+    $f = lowercase_letter( $F ),
+    $k = lowercase_letter( $k ),
+    false = lowercase_letter( $! ),
+    false = lowercase_letter( $  ).
 
 tokenize_test() ->
     [] = tokenize( [], $x ),
