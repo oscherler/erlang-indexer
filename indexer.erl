@@ -2,6 +2,30 @@
 -include("global.hrl").
 -export( [ extract_words/1 ] ).
 
+% print_index
+
+print_index( [ { Word, Occurences } | Es ] ) ->
+    io:format( "~s: ~s~n", [ Word, format_occurences( Occurences ) ] ),
+    print_index( Es );
+print_index( [] ) ->
+    ok.
+
+format_occurences( Occurences ) ->
+    Map = fun
+        ( { L, L } ) -> io_lib:format( "~b", [ L ] );
+        ( { L1, L2 } ) -> io_lib:format( "~b-~b", [ L1, L2 ] )
+    end,
+    string:join( lists:map( Map, Occurences ), ", " ).
+
+% print_file_index
+
+print_file_index( Name ) ->
+    print_index(
+        make_index(
+            index:get_file_contents( Name )
+        )
+    ).
+
 % make_index
 
 make_index( Lines ) ->
