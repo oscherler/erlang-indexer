@@ -96,7 +96,14 @@ index_add_word( Word, LineNumber, Index ) ->
 % take unique words from a line of text
 
 line_words( Line ) ->
-    util:unique( extract_words( Line ) ).
+    util:unique(
+        lists:filter(
+            fun( Word ) ->
+                length( Word ) > 2
+            end,
+            extract_words( Line )
+        )
+    ).
 
 % extract_words
 % tokenize line on consecutive letters
@@ -190,11 +197,14 @@ index_add_line_test() ->
             )
         ),
 
-    I1 = index_add_line( "deer apple hotel", 12, Index ),
+    I1 = index_add_line( "deer apple a so rad hotel", 12, Index ),
     ?assertEqual( [ 12 ], tree:find( "apple", I1 ) ),
     ?assertEqual( [ 12, 4 ], tree:find( "deer", I1 ) ),
     ?assertEqual( [ 12 ], tree:find( "hotel", I1 ) ),
     ?assertEqual( [], tree:find( "mango", I1 ) ),
+    ?assertEqual( none, tree:find( "a", I1 ) ),
+    ?assertEqual( none, tree:find( "so", I1 ) ),
+    ?assertEqual( [ 12 ], tree:find( "rad", I1 ) ),
 
     I2 = index_add_line( "hotel apple hotel mango mango mango", 15, Index ),
     ?assertEqual( [ 15 ], tree:find( "apple", I2 ) ),
@@ -234,7 +244,8 @@ line_words_test() ->
     ?assertEqual( [ "foo" ], line_words("foo") ),
     ?assertEqual( [ "foo" ], line_words("  foo!") ),
     ?assertEqual( [ "foo", "bar" ], line_words("  foo! -bar") ),
-    ?assertEqual( [ "foo", "bar" ], line_words("foo bar bar foo foo") ).
+    ?assertEqual( [ "foo", "bar" ], line_words("foo bar bar foo foo") ),
+    ?assertEqual( [ "big", "blue", "plane" ], line_words("a so big blue plane") ).
 
 extract_words_test() ->
     ?assertEqual( [], extract_words("") ),
